@@ -5,6 +5,7 @@ description = "A small order tracking service for an observability and incident 
 requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115,<1",
+  "opentelemetry-exporter-otlp-proto-grpc>=1.45.0",
   "opentelemetry-instrumentation-fastapi>=0.66b0",
   "opentelemetry-instrumentation-logging>=0.66b0",
   "opentelemetry-sdk>=1.45.0",

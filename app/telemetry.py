@@ -1,8 +1,12 @@
 import logging
+import os
 import time
 
 from opentelemetry import metrics, trace
 from opentelemetry._logs import set_logger_provider
+from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.logging.handler import LoggingHandler
 from opentelemetry.sdk._logs import LoggerProvider
@@ -38,20 +42,32 @@ lookup_counter = meter.create_counter(
 
 
 def setup_telemetry(app):
-    """Configure console exporters for traces, metrics and logs."""
+    """Configure exporters for traces, metrics and logs.
+
+    Signals go to an OTLP endpoint (the Collector) when OTEL_EXPORTER_OTLP_ENDPOINT
+    is set, and to the console otherwise.
+    """
+    if os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"):
+        span_exporter, metric_exporter, log_exporter = (
+            OTLPSpanExporter(), OTLPMetricExporter(), OTLPLogExporter()
+        )
+    else:
+        span_exporter, metric_exporter, log_exporter = (
+            ConsoleSpanExporter(), ConsoleMetricExporter(), ConsoleLogRecordExporter()
+        )
     resource = Resource.create({"service.name": SERVICE_NAME})
 
     tracer_provider = TracerProvider(resource=resource)
-    tracer_provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+    tracer_provider.add_span_processor(BatchSpanProcessor(span_exporter))
     trace.set_tracer_provider(tracer_provider)
 
     reader = PeriodicExportingMetricReader(
-        ConsoleMetricExporter(), export_interval_millis=METRIC_EXPORT_INTERVAL_MS
+        metric_exporter, export_interval_millis=METRIC_EXPORT_INTERVAL_MS
     )
     metrics.set_meter_provider(MeterProvider(resource=resource, metric_readers=[reader]))
 
     logger_provider = LoggerProvider(resource=resource)
-    logger_provider.add_log_record_processor(BatchLogRecordProcessor(ConsoleLogRecordExporter()))
+    logger_provider.add_log_record_processor(BatchLogRecordProcessor(log_exporter))
     set_logger_provider(logger_provider)
     logging.getLogger().addHandler(LoggingHandler(level=logging.INFO, logger_provider=logger_provider))
     logger.setLevel(logging.INFO)

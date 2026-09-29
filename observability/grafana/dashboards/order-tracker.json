@@ -1,0 +1,70 @@
+{
+  "uid": "order-tracker",
+  "title": "Order Tracker - Requests and Errors",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Total requests (range)",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "sum(increase(order_tracker_http_requests_total{http_route!=\"/healthz\"}[$__range]))" }]
+    },
+    {
+      "id": 2, "type": "stat", "title": "Errors (5xx, range)",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } }, "overrides": [] },
+      "targets": [{ "refId": "A", "expr": "sum(increase(order_tracker_http_requests_total{http_response_status_code=~\"5..\"}[$__range])) or vector(0)" }]
+    },
+    {
+      "id": 3, "type": "stat", "title": "Client errors (4xx, range)",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "sum(increase(order_tracker_http_requests_total{http_response_status_code=~\"4..\"}[$__range])) or vector(0)" }]
+    },
+    {
+      "id": 4, "type": "stat", "title": "5xx error ratio",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit" }, "overrides": [] },
+      "targets": [{ "refId": "A", "expr": "(sum(increase(order_tracker_http_requests_total{http_response_status_code=~\"5..\"}[$__range])) or vector(0)) / sum(increase(order_tracker_http_requests_total[$__range]))" }]
+    },
+    {
+      "id": 5, "type": "timeseries", "title": "Requests per second by route",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "targets": [{ "refId": "A", "expr": "sum by (http_route) (rate(order_tracker_http_requests_total[1m]))", "legendFormat": "{{http_route}}" }]
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "Requests per second by status code",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "targets": [{ "refId": "A", "expr": "sum by (http_response_status_code) (rate(order_tracker_http_requests_total[1m]))", "legendFormat": "{{http_response_status_code}}" }]
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "Error requests per second by route (4xx/5xx)",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "targets": [{ "refId": "A", "expr": "sum by (http_route, http_response_status_code) (rate(order_tracker_http_requests_total{http_response_status_code=~\"[45]..\"}[1m]))", "legendFormat": "{{http_route}} {{http_response_status_code}}" }]
+    },
+    {
+      "id": 8, "type": "timeseries", "title": "Order lookups by result",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "targets": [{ "refId": "A", "expr": "sum by (result) (rate(order_tracker_order_lookups_total[1m]))", "legendFormat": "{{result}}" }]
+    },
+    {
+      "id": 9, "type": "logs", "title": "Application logs",
+      "gridPos": { "x": 0, "y": 20, "w": 24, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "refId": "A", "expr": "{service_name=\"order-tracker\"}" }]
+    }
+  ]
+}
