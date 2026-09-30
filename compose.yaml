@@ -78,6 +78,24 @@ services:
       - tempo
     restart: unless-stopped
 
+  incident-response:
+    build: ./incident-response
+    environment:
+      # Read from .env by Compose. Without it the incident evidence is still saved,
+      # but the assistant cannot authenticate.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    volumes:
+      # The assistant reads the source read-only, so it can only write in /incidents.
+      - .:/workspace:ro
+      - ./incidents:/incidents
+    ports:
+      - "127.0.0.1:${INCIDENT_RESPONSE_PORT:-8001}:8001"
+    depends_on:
+      - loki
+      - tempo
+      - prometheus
+    restart: unless-stopped
+
 volumes:
   orders:
   prometheus:
