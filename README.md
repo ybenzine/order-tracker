@@ -42,4 +42,4 @@ The app uses SQLite to keep setup small. Run one app container at a time. The co
 - Grafana: <http://127.0.0.1:3000> (anonymous admin access, local use only). The "Order Tracker - Requests and Errors" dashboard is provisioned automatically.
 - Prometheus: <http://127.0.0.1:9090>
 
-Set `GRAFANA_PORT` or `PROMETHEUS_PORT` if those ports are taken. Configuration lives in `observability/`.
+Set `GRAFANA_PORT` or `PROMETHEUS_PORT` if those ports are taken. The provisioned "Order Tracker 5xx responses" alert fires when any route returns a 5xx in the last 5 minutes. Configuration lives in `observability/`.

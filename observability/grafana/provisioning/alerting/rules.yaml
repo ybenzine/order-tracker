@@ -1,0 +1,52 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: order-tracker
+    folder: Order Tracker
+    interval: 1m
+    rules:
+      - uid: order-tracker-5xx
+        title: Order Tracker 5xx responses
+        condition: C
+        # Prometheus returns no series for a route until it has served a 5xx, so
+        # "no data" means "no 5xx" and must not alert. A route whose 5xx counter
+        # stops rising returns 0, which resolves the alert once the window passes.
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: sum by (http_route) (increase(order_tracker_http_requests_total{http_response_status_code=~"5.."}[5m]))
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: reduce
+              expression: A
+              reducer: last
+              settings: { mode: dropNN }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+        labels:
+          severity: critical
+        annotations:
+          summary: "5xx responses on {{ $labels.http_route }}"
+          description: >-
+            {{ printf "%.0f" $values.B.Value }} 5xx response(s) on {{ $labels.http_route }}
+            in the last 5 minutes. Open the Order Tracker dashboard for the error
+            breakdown, or Explore the app logs and traces in Loki and Tempo.
+          window: 5m
+          __dashboardUid__: order-tracker
+          __panelId__: "7"

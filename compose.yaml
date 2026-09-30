@@ -61,6 +61,7 @@ services:
   grafana:
     image: grafana/grafana:11.4.0
     environment:
+      GF_SERVER_ROOT_URL: http://127.0.0.1:${GRAFANA_PORT:-3000}
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_NAME: "Order Tracker Inc."
       GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
