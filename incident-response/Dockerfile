@@ -1,9 +1,10 @@
 FROM python:3.12-slim
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends nodejs npm \
+    && apt-get install -y --no-install-recommends nodejs npm git gh \
     && npm install -g @anthropic-ai/claude-code \
     && rm -rf /var/lib/apt/lists/*
+RUN git config --system credential.helper "!gh auth git-credential"
 COPY --from=ghcr.io/astral-sh/uv:0.8.22 /uv /uvx /bin/
 WORKDIR /srv
 COPY pyproject.toml uv.lock ./

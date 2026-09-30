@@ -84,6 +84,9 @@ services:
       # Read from .env by Compose. Without it the incident evidence is still saved,
       # but the assistant cannot authenticate.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # With both set the assistant works in a clone and this service opens a draft PR.
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GITHUB_REPO: ${GITHUB_REPO:-ybenzine/order-tracker}
     volumes:
       # The assistant reads the source read-only, so it can only write in /incidents.
       - .:/workspace:ro
