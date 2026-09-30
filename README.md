@@ -43,3 +43,9 @@ The app uses SQLite to keep setup small. Run one app container at a time. The co
 - Prometheus: <http://127.0.0.1:9090>
 
 Set `GRAFANA_PORT` or `PROMETHEUS_PORT` if those ports are taken. The provisioned "Order Tracker 5xx responses" alert fires when any route returns a 5xx in the last 5 minutes. Configuration lives in `observability/`.
+
+## Incident response
+
+The `incident-response` service (port 8001) receives Grafana alerts at `POST /alerts`. For each firing alert it saves the alert, Loki logs, Tempo 5xx traces and Prometheus counts to `incidents/<time>-<fingerprint>/`, then starts Claude Code headlessly to write `analysis.md` in that folder. The assistant can only read the source and write into the incident folder.
+
+Put `ANTHROPIC_API_KEY=sk-ant-...` in `.env` (Compose reads it; Git ignores it). Without a key the evidence is still saved and `assistant.log` records the failure. Each run is billed to that key.
